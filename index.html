@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="js/three.js"></script>
+    <script src="js/inflate.min.js"></script>
+    <script src="js/FBXLoader.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/WebGL.js"></script>
+    <script src="js/stats.min.js"></script>
+    <script>
+        if (WEBGL.isWebGLAvailable() === false) {
+            document.body.appendChild(WEBGL.getWebGLErrorMessage());
+        }
+        var container, stats, controls;
+        var camera, scene, renderer, light;
+        var clock = new THREE.Clock();
+        var mixers = [];
+        var mixers2 = [];
+        init();
+        animate();
+
+        function init() {
+            container = document.createElement('div');
+            document.body.appendChild(container);
+            camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 2000);
+            camera.position.set(100, 200, 300);
+            controls = new THREE.OrbitControls(camera);
+            controls.target.set(0, 100, 0);
+            controls.update();
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xa0a0a0);
+            scene.fog = new THREE.Fog(0xa0a0a0, 100, 10000);
+            light = new THREE.HemisphereLight(0xffffff, 0x444444);
+            light.position.set(0, 100, 0);
+            scene.add(light);
+
+            light = new THREE.DirectionalLight(0xffffff);
+            light.position.set(0, 100, 100);
+            light.castShadow = true;
+            light.shadow.camera.top = 180;
+            light.shadow.camera.bottom = -100;
+            light.shadow.camera.left = -120;
+            light.shadow.camera.right = 120;
+            scene.add(light);
+           
+            var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2000, 2000), new THREE.MeshPhongMaterial({
+                color: 0x999999,
+                depthWrite: false
+            }));
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            var grid = new THREE.GridHelper(2000, 20, 0xff0000, 0x000000);
+            grid.material.opacity = 0.2;
+            grid.material.transparent = true;
+            scene.add(grid)   
+           
+
+            var loader2 = new THREE.FBXLoader();
+            loader2.load('Animacion/Pain Gesture.fbx', function(object2) {
+                object2.mixer = new THREE.AnimationMixer(object2);
+                mixers.push(object2.mixer);
+                var action = object2.mixer.clipAction(object2.animations[0]);
+                action.play();
+                object2.traverse(function(child) {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                object2.scale.set(20, 20, 20);
+                object2.Name = 'Anciano';
+                scene.add(object2);
+
+            });
+            // model two
+
+            var objeto = scene.getObjectByName("Anciano");
+
+
+            scene.add(objeto);
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+            window.addEventListener('resize', onWindowResize, false);
+            // stats
+            stats = new Stats();
+            container.appendChild(stats.dom);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        // 
+        function animate() {
+            requestAnimationFrame(animate);
+            if (mixers.length > 0) {
+                for (var i = 0; i < mixers.length; i++) {
+
+                    mixers[i].update(clock.getDelta());
+
+                }
+
+            }
+            renderer.render(scene, camera);
+            stats.update();
+        }
+    </script>
+    <div><canvas width="1366" height="298" style="width: 1366px; height: 298px;"></canvas>
+        <div style="position: fixed; top: 0px; left: 0px; cursor: pointer; opacity: 0.9; z-index: 10000;">
+            <canvas width="80"
+                height="48" style="width: 80px; height: 48px; display: block;">
+            </canvas>
+            <canvas width="80" height="48"
+                style="width: 80px; height: 48px; display: none;">
+            </canvas>
+            <canvas width="80" height="48"
+                style="width: 80px; height: 48px; display: none;">
+            </canvas>
+        </div>
+    </div>
+</body>
+</html>
